@@ -1,0 +1,61 @@
+注意。这里面的东西不保证准确。如果你对这里面的文件有异议，希望直接删除或调整，请直接发Issue，这不是最新版本的，不一定准确。
+ section\prop\mj_spear\mj_spear.gim
+ section\prop\mj_wood\mj_wood.gim
+ section\prop\mj_yijia\mj_yijia.gim
+ section\prop\prop_jiu\prop_jiu.gim
+ section\prop\prop_mi\prop_mi.gim
+ section\prop\prop_musicbox\prop_musicbox.gim
+ section\prop\prop_wz_ganhua\prop_wz_ganhua.gim
+ section\prop\prop_wz_huguang\prop_wz_huguang.gim
+ section\prop\prop_wz_jinbei\prop_wz_jinbei.gim
+ section\prop\prop_wz_meiyd\prop_meiyd.gim
+ section\prop\prop_wz_menpai\prop_wz_menpai.gim
+ section\prop\prop_wz_sgpz\prop_wz_sgpz.gim
+ section\prop\prop_wz_shalou\prop_wz_shalou.gim
+ section\prop\prop_wz_shuzhuang\prop_wz_shuzhuang.gim
+ section\prop\prop_wz_tangguoguan\prop_wz_tangguoguan.gim
+ section\prop\prop_wz_tk\prop_wz_tk.gim
+ section\prop\prop_wz_xiangkuang\prop_wz_xiangkuang.gim
+ section\prop\prop_wz_xinzhidui\prop_wz_xinzhidui.gim
+ section\prop\prop_wz_youlinsj\prop_wz_youlinsj.gim
+ section\prop\prop_wz_zhong\prop_wz_zhong.gim
+ section\prop\mj_yijia\mj_yijia.gim
+ section\prop\prop_jiu\prop_jiu.gim
+ section\prop\prop_mi\prop_mi.gim
+ section\prop\prop_musicbox\prop_musicbox.gim
+ section\prop\prop_wz_ganhua\prop_wz_ganhua.gim
+ section\prop\prop_wz_huguang\prop_wz_huguang.gim
+ section\prop\prop_wz_jinbei\prop_wz_jinbei.gim
+ section\prop\prop_wz_meiyd\prop_meiyd.gim
+ section\prop\prop_wz_menpai\prop_wz_menpai.gim
+ section\prop\prop_wz_sgpz\prop_wz_sgpz.gim
+ section\prop\prop_wz_shalou\prop_wz_shalou.gim
+ section\prop\prop_wz_shuzhuang\prop_wz_shuzhuang.gim
+ section\prop\prop_wz_tangguoguan\prop_wz_tangguoguan.gim
+ section\prop\prop_wz_tk\prop_wz_tk.gim
+ section\prop\prop_wz_xinzhidui\prop_wz_xinzhidui.gim
+section\monster\monster_daozei\monster_daozei.gim
+ section\monster\monster_miaosha\monster_miaosha.gim
+ section\monster\monster_miaosha\monster_miaosha_cha
+ section\monster\monster_miaosha\monster_miaosha_chair.gim
+ section\monster\monster_muchao\monster_muchao.gim
+ section\monster\monster_muchao\monster_muchao_wuya.gim
+ section\monster\monster_qiqiu\monster_qiqiu_blue.gim
+ section\monster\monster_qiqiu\monster_qiqiu_red.gim
+section\monster\monster_tiao\monster_tiao.gim
+ section\monster\monster_tiao\monster_tiao_01.gim
+ section\monster\monster_xiaobai\monster_xiaobai.gim
+section\monster\monster_xiaobai\monster_xiaobai_bs.gim
+ section\monster\monster_yuan\monster_yuan.gim
+ section\monster\monster_yuan\monster_yuan01.gim
+section\monster\monster_yuan\monster_yuan_liantiao.gim
+section\monster\monster_daozei\monster_daozei.gim
+section\monster\monster_miaosha\monster_miaosha.gim
+section\monster\monster_miaosha\monster_miaosha_cha
+section\monster\monster_miaosha\monster_miaosha_chair.gim
+section\monster\monster_muchao\monster_muchao.gim
+section\monster\monster_muchao\monster_muchao_wuya.gim
+section\monster\monster_qiqiu\monster_qiqiu_blue.gim
+section\monster\monster_qiqiu\monster_qiqiu_red.gim
+section\monster\monster_tiao\monster_tiao_01.gim
+section\monster\monster_yuan\monster_yuan01.gim
