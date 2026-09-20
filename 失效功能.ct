@@ -1,0 +1,2913 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable>
+  <CheatEntries>
+    <CheatEntry>
+      <ID>52</ID>
+      <Description>"视角大小功能初始化"</Description>
+      <LastState/>
+      <Color>FFFFFF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+aobscanmodule(SetFovVal,neox_engine.dll,F3 0F 10 ?? ?? ?? ?? ?? F3 0F 59 ?? ?? E8 ?? ?? ?? ?? 48 8B ?? ?? 48 8B)
+alloc(newmem,$1000,SetFovVal)
+alloc(FovVal,4)
+registersymbol(FovVal)
+label(code)
+label(return)
+
+newmem:
+
+code:
+  mulss xmm1,[FovVal]
+  jmp return
+
+SetFovVal+08:
+  jmp newmem
+return:
+registersymbol(SetFovVal)
+
+[DISABLE]
+SetFovVal+08:
+  db F3 0F 59 4B 6C
+dealloc(FovVal)
+unregistersymbol(FovVal)
+unregistersymbol(SetFovVal)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: neox_engine.dll.text+E3895A
+
+neox_engine.dll.text+E38927: C6 41 22 01              - mov byte ptr [rcx+22],01
+neox_engine.dll.text+E3892B: 0F 11 89 5C 00 01 00     - movups [rcx+0001005C],xmm1
+neox_engine.dll.text+E38932: 48 8B 4B 50              - mov rcx,[rbx+50]
+neox_engine.dll.text+E38936: 80 79 20 00              - cmp byte ptr [rcx+20],00
+neox_engine.dll.text+E3893A: 75 44                    - jne neox_engine.dll.text+E38980
+neox_engine.dll.text+E3893C: 48 8B 43 58              - mov rax,[rbx+58]
+neox_engine.dll.text+E38940: 0F 57 DB                 - xorps xmm3,xmm3
+neox_engine.dll.text+E38943: F3 0F 10 91 80 03 01 00  - movss xmm2,[rcx+00010380]
+neox_engine.dll.text+E3894B: F3 44 0F 11 54 24 20     - movss [rsp+20],xmm10
+neox_engine.dll.text+E38952: F3 0F 10 88 D0 00 00 00  - movss xmm1,[rax+000000D0]
+// ---------- INJECTING HERE ----------
+neox_engine.dll.text+E3895A: F3 0F 59 4B ??           - mulss xmm1,[rbx+6C]
+// ---------- DONE INJECTING  ----------
+neox_engine.dll.text+E3895F: E8 ?? ?? ?? ??           - call neox_engine.dll.text+20BE7C0
+neox_engine.dll.text+E38964: 48 8B ?? ??              - mov rax,[rbx+58]
+neox_engine.dll.text+E38968: 48 8B ?? ??              - mov rdx,[rbx+50]
+neox_engine.dll.text+E3896C: 8B 88 ?? ?? ?? ??        - mov ecx,[rax+000000D0]
+neox_engine.dll.text+E38972: 89 8A ?? ?? ?? ??        - mov [rdx+0001036C],ecx
+neox_engine.dll.text+E38978: C6 42 ?? 01              - mov byte ptr [rdx+22],01
+neox_engine.dll.text+E3897C: 48 8B 4B 50              - mov rcx,[rbx+50]
+neox_engine.dll.text+E38980: 4C 8D 9C 24 F0 00 00 00  - lea r11,[rsp+000000F0]
+neox_engine.dll.text+E38988: C6 41 21 00              - mov byte ptr [rcx+21],00
+neox_engine.dll.text+E3898C: 48 8B 43 58              - mov rax,[rbx+58]
+}
+</AssemblerScript>
+      <Hotkeys>
+        <Hotkey>
+          <Action>Activate</Action>
+          <Keys>
+            <Key>113</Key>
+          </Keys>
+          <ID>0</ID>
+        </Hotkey>
+        <Hotkey>
+          <Action>Deactivate</Action>
+          <Keys>
+            <Key>114</Key>
+          </Keys>
+          <ID>1</ID>
+        </Hotkey>
+      </Hotkeys>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>198</ID>
+          <Description>"默认100"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>Float</VariableType>
+          <Address>FovVal</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>57</ID>
+      <Description>"初始化坐标类功能"</Description>
+      <Options moDeactivateChildrenAsWell="1"/>
+      <LastState/>
+      <Color>FFFFFF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{
+    Author:BinRev
+    Game:Identity V
+    Creation date:2025/8/11
+    Script description: initialize position functions.
+}
+
+[ENABLE]
+//Get hook entry address.
+aobscanmodule(ClientEntityPosSet_x,neox_engine.dll,F2 ?? ?? 83 E0 ?? ?? ?? F2 ?? ?? 06 F2 ?? ?? 87 ?? ?? ?? ?? 8B 46 08) //Game coordinates-x set of client entity.
+aobscanmodule(LocalPlayerEntityPosInfo_x,neox_engine.dll,F2 ?? ?? 43 64 ?? 4A ?? ?? ?? 49 70 ?? ?? 42 20)  //Local player coordinate-x data of the game client.
+
+//Bind symbols to the hook entry.
+registersymbol(ClientEntityPosSet_x)
+registersymbol(LocalPlayerEntityPosInfo_x)
+
+//Allocated the memory for hook code.
+alloc(HookCode,4096,neox_engine.dll)
+
+//Allocated the memory for functions state data list.
+alloc(PosFuncStateList,1024)
+{
+======================== Position functions state list struct ========================
+PosFuncStateList:
+  +0 (8byte) -&gt; Pointer to map station tp coordinate array
+  +8 (4byte) -&gt; Myself coordinate-x
+  +C (4byte) -&gt; Myself coordinate-z
+  +10 (1byte) -&gt; Auto get myself entity object (0:disable,1:enable)
+  +11 (8byte) -&gt; Myself entity object pointer
+  +19 (1byte) -&gt; TP hack tp mode select (0:disable,1:自定义坐标瞬移,2:地图交互点瞬移,3:板车瞬移)
+  +1A (1byte) -&gt; TP state (FF:wait,0:TP of hotkey-B,1:TP of hotkey-N,2:TP of hotkey-M,3:TP of hotkey-,,4:TP of hotkey-.,5:TP of hotkey-J,6:TP of hotkey-K,7:TP of hotkey-P)
+  +1B (8byte) -&gt; Pointer to custom coordinate TP config list
+  +23 (1byte) -&gt; Record the current coordinates for hotkey TP functions(FF:No recording,0:Recording coordinate of hotkey-B,1:Recording coordinate of hotkey-N,2:Recording coordinate of hotkey-M,
+3:Recording coordinate of hotkey-,,4:Recording coordinate of hotkey-.,5:Recording coordinate of hotkey-J,6:Recording coordinate of hotkey-K,
+7:Recording coordinate of hotkey-P,8:Recording coordinate of springboard_a,9:Recording coordinate of springboard_b)
+  +24 (8byte) -&gt; Pointer to springboard TP config list.
+  +2C (1byte) -&gt; Map select for map station tp. (0:联合狩猎_里奥的回忆,1:联合狩猎_湖景村,2:联合狩猎_月亮河公园,3:联合狩猎_永眠镇,4:匹配排位_月亮河公园,5:匹配排位_赛马场,
+6:匹配排位_闪金石窟,7:匹配排位_不归林,8:匹配排位_圣心医院,9:匹配排位_军工厂,A:匹配排位_湖景村,B:匹配排位_永眠镇,C:匹配排位_里奥的回忆,D:模仿者_闪金石窟,E:噩梦逐影_闪金石窟)
+  +2D (1byte) -&gt; Perfectly get myself entity object pointer (0:disable,1:enable)
+======================================================================================
+}
+
+//Allocated the memory for map station tp hack coordinate array.
+alloc(MapStationTpHackCoorArray,2048,neox_engine.dll)
+{
+======================= Map station coordinate array struct ==========================
+MapStationTpHackCoorArray:
+  +0xD*n+0x0 -&gt; This ccoordinate element is enable? (1:enable,0:disable)
+  +0xD*n+0x1 -&gt; Map tp station coordinate-x
+  +0xD*n+0x5 -&gt; Map tp station coordinate-y
+  +0xD*n+0xA -&gt; Map tp station coordinate-z
+======================================================================================
+}
+//Initialize map station coordinate array.
+//联合狩猎_里奥的回忆
+MapStationTpHackCoorArray+D*0:
+  db 01 00 00 EB 44 00 00 80 3F 00 40 84 44  //小门圣诞树
+MapStationTpHackCoorArray+D*1:
+  db 01 00 20 A9 44 00 00 00 40 00 E0 FE 44  //大门油罐
+MapStationTpHackCoorArray+D*2:
+  db 01 00 20 C0 44 00 00 80 3F 00 C0 C2 44  //中场
+MapStationTpHackCoorArray+D*3:
+  db 01 00 C0 99 44 00 00 80 3F 00 80 75 44  //大房外
+MapStationTpHackCoorArray+D*4:
+  db 01 00 E0 F4 44 00 00 80 3F 00 C0 F9 44  //大门
+MapStationTpHackCoorArray+D*5:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*6:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*7:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//联合狩猎_湖景村
+MapStationTpHackCoorArray+D*8:
+  db 01 00 00 80 BF 00 00 00 00 00 00 FC 43  //小木屋
+MapStationTpHackCoorArray+D*9:
+  db 01 00 00 B0 C3 00 00 00 00 00 00 FC C3  //双十一
+MapStationTpHackCoorArray+D*A:
+  db 01 00 C0 48 44 00 00 A0 42 00 00 7D C3  //大船二楼
+MapStationTpHackCoorArray+D*B:
+  db 01 00 00 10 C4 00 00 00 00 00 00 3C 42  //小船
+MapStationTpHackCoorArray+D*C:
+  db 01 00 80 93 43 00 00 00 00 00 00 0D C3  //中场
+MapStationTpHackCoorArray+D*D:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*E:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*F:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//联合狩猎_月亮河公园
+MapStationTpHackCoorArray+D*10:
+  db 01 00 00 37 44 00 00 00 00 00 80 9A 43  //起点
+MapStationTpHackCoorArray+D*11:
+  db 01 00 00 CA C3 00 00 00 00 00 00 29 C3  //三站下
+MapStationTpHackCoorArray+D*12:
+  db 01 00 C0 3E C4 00 00 00 00 00 00 E2 42  //马戏团
+MapStationTpHackCoorArray+D*13:
+  db 01 00 80 D7 43 00 00 10 41 00 80 BE C3  //鬼屋
+MapStationTpHackCoorArray+D*14:
+  db 01 00 00 30 C2 00 00 00 00 00 00 B7 43  //人皇桥
+MapStationTpHackCoorArray+D*15:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*16:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*17:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//联合狩猎_永眠镇
+MapStationTpHackCoorArray+D*18:
+  db 01 00 00 E7 48 00 00 00 00 00 00 7E 43  //假门
+MapStationTpHackCoorArray+D*19:
+  db 01 00 C0 34 44 00 00 00 00 00 80 04 C4  //红蝶楼窗下
+MapStationTpHackCoorArray+D*1A:
+  db 01 00 40 86 44 00 00 00 00 00 00 36 43  //独栋
+MapStationTpHackCoorArray+D*1B:
+  db 01 00 80 D7 43 00 00 00 00 00 00 3E C3  //中场靠S板
+MapStationTpHackCoorArray+D*1C:
+  db 01 00 60 97 44 00 00 00 00 0 00 6C C3  //墓地地窖旁
+MapStationTpHackCoorArray+D*1D:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*1E:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*1F:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//匹配排位_月亮河公园
+MapStationTpHackCoorArray+D*20:
+  db 01 00 40 0E C4 00 00 1C 42 00 00 48 42  //三站滑梯
+MapStationTpHackCoorArray+D*21:
+  db 01 00 00 64 42 00 00 1C 42 00 00 F0 42  //二站滑梯
+MapStationTpHackCoorArray+D*22:
+  db 01 00 C0 56 44 00 00 1C 42 00 00 BE C2  //鬼板滑梯（右）
+MapStationTpHackCoorArray+D*23:
+  db 01 00 00 60 44 00 00 1C 42 00 00 AC C2  //鬼板滑梯（左）
+MapStationTpHackCoorArray+D*24:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*25:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*26:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*27:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//匹配排位_赛马场
+MapStationTpHackCoorArray+D*28:
+  db 01 00 00 78 C2 00 00 00 00 00 00 D2 43  //马棚马
+MapStationTpHackCoorArray+D*29:
+  db 01 00 00 82 42 00 00 00 00 00 00 A4 C3  //观景台马
+MapStationTpHackCoorArray+D*2A:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*2B:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*2C:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*2D:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*2E:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*2F:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//匹配排位_闪金石窟
+MapStationTpHackCoorArray+D*30:
+  db 01 00 80 AA 43 00 00 00 00 00 00 A4 C3  //矿车
+MapStationTpHackCoorArray+D*31:
+  db 01 00 00 FA 43 00 00 CC C2 00 00 28 42  //小高台爬梯
+MapStationTpHackCoorArray+D*32:
+  db 01 00 00 A0 C1 00 80 81 C3 00 00 1F 43  //-2大门爬梯
+MapStationTpHackCoorArray+D*33:
+  db 01 00 00 BC C3 00 80 81 C3 00 00 52 C3  //-2矿区爬梯
+MapStationTpHackCoorArray+D*34:
+  db 01 00 00 E6 C3 00 00 1D C3 00 80 CE C3  //-1电梯爬梯
+MapStationTpHackCoorArray+D*35:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*36:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*37:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//匹配排位_不归林
+MapStationTpHackCoorArray+D*38:
+  db 01 00 80 A8 43 00 00 34 42 00 00 9E 43  //荡绳密码机
+MapStationTpHackCoorArray+D*39:
+  db 01 00 00 86 C3 00 00 40 40 00 00 C5 C3  //木屋密码机
+MapStationTpHackCoorArray+D*3A:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*3B:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*3C:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*3D:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*3E:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*3F:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//匹配排位_圣心医院
+MapStationTpHackCoorArray+D*40:
+  db 01 00 00 D8 41 00 00 96 42 00 00 AA C2  //二楼密码机
+MapStationTpHackCoorArray+D*41:
+  db 01 00 00 6E C3 00 00 20 41 00 00 C0 C0  //鸟笼密码机
+MapStationTpHackCoorArray+D*42:
+  db 01 00 80 15 44 00 00 00 00 00 00 4E 43  //废墟密码机
+MapStationTpHackCoorArray+D*43:
+  db 01 00 80 F3 C3 00 00 00 00 00 00 86 43  //大门密码机
+MapStationTpHackCoorArray+D*44:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*45:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*46:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*47:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//匹配排位_军工厂
+MapStationTpHackCoorArray+D*48:
+  db 01 00 E0 AF 44 00 00 00 00 00 C0 B3 44  //四合院
+MapStationTpHackCoorArray+D*49:
+  db 01 00 80 F1 44 00 00 00 00 00 80 70 44  //大门废墟
+MapStationTpHackCoorArray+D*4A:
+  db 01 00 20 DA 44 00 00 80 3F 00 E0 FA 44  //木屋废墟
+MapStationTpHackCoorArray+D*4B:
+  db 01 00 20 8D 44 00 00 00 00 00 10 09 56  //无敌废墟
+MapStationTpHackCoorArray+D*4C:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*4D:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*4E:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*4F:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//匹配排位_湖景村
+MapStationTpHackCoorArray+D*50:
+  db 01 00 80 BF C3 00 00 00 00 00 80 C6 C3  //双十一
+MapStationTpHackCoorArray+D*51:
+  db 01 00 80 82 C3 00 00 00 00 00 00 F1 43  //小木屋
+MapStationTpHackCoorArray+D*52:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*53:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*54:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*55:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*56:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*57:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//匹配排位_永眠镇
+MapStationTpHackCoorArray+D*58:
+  db 01 00 00 5C 44 00 00 00 00 00 00 24 C4  //墓地外
+MapStationTpHackCoorArray+D*59:
+  db 01 00 C0 29 44 00 00 4C 42 00 80 C9 C3  //红蝶楼
+MapStationTpHackCoorArray+D*5A:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*5B:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*5C:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*5D:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*5E:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*5F:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//匹配排位_里奥的回忆
+MapStationTpHackCoorArray+D*60:
+  db 01 00 20 F1 44 00 00 80 3F 00 40 C2 44  //木屋
+MapStationTpHackCoorArray+D*61:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*62:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*63:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*64:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*65:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*66:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*67:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//模仿者_闪金石窟
+MapStationTpHackCoorArray+D*68:
+  db 01 00 00 37 C3 00 00 1E C3 00 00 D4 43  //爬梯1（拉铃处）
+MapStationTpHackCoorArray+D*69:
+  db 01 00 00 60 43 00 00 1E C3 00 00 0E 43  //爬梯2（愚人金）
+MapStationTpHackCoorArray+D*6A:
+  db 01 00 00 63 43 00 00 21 C3 00 00 96 C3  //爬梯3（金石）
+MapStationTpHackCoorArray+D*6B:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*6C:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*6D:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*6E:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*6F:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//噩梦逐影_闪金石窟
+MapStationTpHackCoorArray+D*70:
+  db 01 00 00 77 C3 00 00 00 00 00 80 E2 C3  //蹦床
+MapStationTpHackCoorArray+D*71:
+  db 01 00 00 BF C3 00 80 81 C3 00 00 4E C3  //爬梯
+MapStationTpHackCoorArray+D*72:
+  db 01 00 00 FB 43 00 00 CE C2 00 00 E8 41  //爬梯
+MapStationTpHackCoorArray+D*73:
+  db 01 00 00 F3 43 00 00 00 00 00 00 18 C3  //矿车
+MapStationTpHackCoorArray+D*74:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*75:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*76:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+MapStationTpHackCoorArray+D*77:
+  db 00 00 00 00 00 00 00 00 00 00 00 00 00  //无
+
+//Allocated the memory for custom coordinate TP config list.
+alloc(CustomCoorTPCfgList,256)
+{
+===================== Custom coordinate TP config list struct ========================
+CustomCoorTPCfgList:
+  +0*D -&gt; Hotkey_B:
+    +0 -&gt; This TP hotkey is enable? (0:disable,1:enable)
+    +1+0*4 -&gt; x
+    +1+1*4 -&gt; y
+    +1+2*4 -&gt; z
+  +1*D -&gt; Hotkey_N:
+    +0 -&gt; The TP hotkey is enable? (0:disable,1:enable)
+    +1+0*4 -&gt; x
+    +1+1*4 -&gt; y
+    +1+2*4 -&gt; z
+  ...
+======================================================================================
+}
+
+//Initialize custom coordinate TP config list.
+CustomCoorTPCfgList+0*D:       //Hotkey:B
+  db 01
+CustomCoorTPCfgList+1*D:       //Hotkey:N
+  db 01
+CustomCoorTPCfgList+2*D:       //Hotkey:M
+  db 01
+CustomCoorTPCfgList+3*D:       //Hotkey:,
+  db 01
+CustomCoorTPCfgList+4*D:       //Hotkey:.
+  db 01
+CustomCoorTPCfgList+5*D:       //Hotkey:J
+  db 01
+CustomCoorTPCfgList+6*D:       //Hotkey:K
+  db 01
+CustomCoorTPCfgList+7*D:       //Hotkey:P
+  db 01
+
+//Bind symbols to the custom coordinate TP config list.
+registersymbol(CustomCoorTPCfgList)
+
+//Allocated the memory for springboard TP config list.
+alloc(SpringBoardTPCfgList,32)
+{
+========================== Springboard TP config list struct ==========================
+SpringBoardTPCfgList:
+  +0*C -&gt; Springboard_a:
+    +0 -&gt; x
+    +4 -&gt; y
+    +8 -&gt; z
+  +1*C -&gt; Springboard_b:
+    +0 -&gt; x
+    +4 -&gt; y
+    +8 -&gt; z
+======================================================================================
+}
+
+//Bind symbols to the springboard TP config list.
+registersymbol(SpringBoardTPCfgList)
+
+//Initialize position functions state data list.
+PosFuncStateList+0:
+  dq MapStationTpHackCoorArray
+PosFuncStateList+1A:
+  db FF
+PosFuncStateList+1B:
+  dq CustomCoorTPCfgList
+PosFuncStateList+23:
+  db FF
+PosFuncStateList+24:
+  dq SpringBoardTPCfgList
+PosFuncStateList+2D:
+  db 01
+
+//Bind symbols to the position functions state data list.
+registersymbol(PosFuncStateList)
+
+//Bind symbols to the client entity coordinate-x set on hook code.
+registersymbol(ClientEntityCoordinateXSetOnHookCode)
+
+//Label of the client entity coordinate-x set on hook code.
+label(ClientEntityCoordinateXSetOnHookCode)
+
+//Label of hook exit.
+label(HookExit_ClientEntityPosSet_x)
+label(HookReturn_ClientEntityPosSet_x)
+label(HookExit_LocalPlayerEntityPosInfo_x)
+label(HookReturn_LocalPlayerEntityPosInfo_x)
+
+//Label of original asm code.
+label(OriginalAsm_ClientEntityPosSet_x)
+label(OriginalAsm_LocalPlayerEntityPosInfo_x)
+
+//Label of Conditional structure.
+label(End_AutoGetMyselfObjIsDisable)
+label(End_RecordCurrentCoordinatesForCustomCoordinatesTP)
+label(End_AutoGetMyselfObjPtrByPlayerFlagOfModelSkeletal)
+label(End_RecordCurrentCoordinatesForSpringboardTP)
+label(End_AllTpLogic)
+label(CustomCoordinateTP)
+label(MapStationTp)
+label(SpringTP)
+
+HookCode:
+
+OriginalAsm_ClientEntityPosSet_x:
+  cmp byte ptr [PosFuncStateList+2D],01            //Judge the function switch of perfectly get myself entity object pointer
+  jne End_AutoGetMyselfObjPtrByPlayerFlagOfModelSkeletal
+  push rdi
+  xor rdi,rdi
+  mov rdi,qword ptr [rbx+48]
+  cmp byte ptr [rdi+1C0],03
+  pop rdi
+  jne End_AutoGetMyselfObjPtrByPlayerFlagOfModelSkeletal
+  mov qword ptr [PosFuncStateList+11],rbx
+  mov byte ptr [PosFuncStateList+2D],00
+End_AutoGetMyselfObjPtrByPlayerFlagOfModelSkeletal:
+  cmp byte ptr [PosFuncStateList+10],01
+  jne End_AutoGetMyselfObjIsDisable
+  push rdx
+  xor rdx,rdx
+  mov edx,dword ptr [rbx+E0]
+  cmp dword ptr [PosFuncStateList+08],edx    //Judge the x-axis
+  pop rdx
+  jne End_AutoGetMyselfObjIsDisable
+  push rdx
+  xor rdx,rdx
+  mov edx,dword ptr [rbx+E8]
+  cmp dword ptr [PosFuncStateList+0C],edx    //Judge the z-axis
+  pop rdx
+  jne End_AutoGetMyselfObjIsDisable
+  mov byte ptr [PosFuncStateList+10],00
+  mov qword ptr [PosFuncStateList+11],rbx
+End_AutoGetMyselfObjIsDisable:
+  cmp byte ptr [PosFuncStateList+23],FF
+  je End_RecordCurrentCoordinatesForCustomCoordinatesTP
+  cmp byte ptr [PosFuncStateList+23],00                  //Judge the value range n &gt;= 0
+  jl End_RecordCurrentCoordinatesForCustomCoordinatesTP
+  cmp byte ptr [PosFuncStateList+23],07                  //Judge the value range n &lt;= 7
+  ja End_RecordCurrentCoordinatesForCustomCoordinatesTP
+  push rdx
+  push rdi
+  push rcx
+  xor rcx,rcx
+  xor rdi,rdi
+  xor rdx,rdx
+
+  mov rdx,qword ptr [PosFuncStateList+11]  //Myself entity object pointer
+  mov ecx,dword ptr [rdx+E0]               //Read coorfinate-x
+  mov rdi,qword ptr [PosFuncStateList+1B]  //Pointer to custom coordinate TP config list
+  xor rdx,rdx
+  movzx edx,byte ptr [PosFuncStateList+23] //TP hotkey
+  imul edx,0D
+  add rdi,edx
+  add rdi,01
+  mov dword ptr [rdi],ecx                  //Record coorfinate-x
+
+  mov rdx,qword ptr [PosFuncStateList+11]  //Myself entity object pointer
+  mov ecx,dword ptr [rdx+E4]               //Read coorfinate-y
+  mov rdi,qword ptr [PosFuncStateList+1B]  //Pointer to custom coordinate TP config list
+  xor rdx,rdx
+  movzx edx,byte ptr [PosFuncStateList+23] //TP hotkey
+  imul edx,0D
+  add rdi,edx
+  add rdi,05
+  mov dword ptr [rdi],ecx                  //Record coorfinate-y
+
+  mov rdx,qword ptr [PosFuncStateList+11]  //Myself entity object pointer
+  mov ecx,dword ptr [rdx+E8]               //Read coorfinate-z
+  mov rdi,qword ptr [PosFuncStateList+1B]  //Pointer to custom coordinate TP config list
+  xor rdx,rdx
+  movzx edx,byte ptr [PosFuncStateList+23] //TP hotkey
+  imul edx,0D
+  add rdi,edx
+  add rdi,09
+  mov dword ptr [rdi],ecx                  //Record coorfinate-z
+
+  pop rcx
+  pop rdi
+  pop rdx
+  mov byte ptr [PosFuncStateList+23],FF
+End_RecordCurrentCoordinatesForCustomCoordinatesTP:
+  cmp byte ptr [PosFuncStateList+23],FF
+  je End_RecordCurrentCoordinatesForSpringboardTP
+  cmp byte ptr [PosFuncStateList+23],08                     //Judge the value range n &gt;= 8
+  jl End_RecordCurrentCoordinatesForSpringboardTP
+  cmp byte ptr [PosFuncStateList+23],09                     //Judge the value range n &lt;= 9
+  ja End_RecordCurrentCoordinatesForSpringboardTP
+
+  push rdi
+  push rax
+  push rcx
+  xor rcx,rcx
+  xor rax,rax
+  xor rdi,rdi
+
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer.
+  mov ecx,dword ptr [rdi+E0]                     //Read coorfinate-x
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+24]        //Read springboard TP config list pointer.
+  movzx eax,byte ptr [PosFuncStateList+23]       //TP hotkey
+  sub eax,08
+  imul eax,0C
+  add rdi,eax
+  mov dword ptr [rdi],ecx                        //Record coorfinate-x
+
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer.
+  mov ecx,dword ptr [rdi+E4]                     //Read coorfinate-y
+  xor rdi,rdi
+  mov rdi,[PosFuncStateList+24]                  //Read springboard TP config list pointer.
+  movzx eax,byte ptr [PosFuncStateList+23]       //TP hotkey
+  sub eax,08
+  imul eax,0C
+  add rdi,eax
+  mov dword ptr [rdi+04],ecx                     //Record coorfinate-y
+
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer.
+  mov ecx,dword ptr [rdi+E8]                     //Read coorfinate-z
+  xor rdi,rdi
+  mov rdi,[PosFuncStateList+24]                  //Read springboard TP config list pointer.
+  movzx eax,byte ptr [PosFuncStateList+23]       //TP hotkey
+  sub eax,08
+  imul eax,0C
+  add rdi,eax
+  mov dword ptr [rdi+08],ecx                     //Record coorfinate-z
+
+  pop rcx
+  pop rax
+  pop rdi
+  mov byte ptr [PosFuncStateList+23],FF
+End_RecordCurrentCoordinatesForSpringboardTP:
+  cmp byte ptr [PosFuncStateList+19],00          //Judge TP switch
+  je End_AllTpLogic
+  cmp byte ptr [PosFuncStateList+19],01          //Judge TP mode of custom coordinate TP
+  je CustomCoordinateTP
+  cmp byte ptr [PosFuncStateList+19],02          //Judge TP mode of map station TP
+  je MapStationTp
+  cmp byte ptr [PosFuncStateList+19],03          //Judge TP mode of spring TP
+  je SpringTP
+  jmp End_AllTpLogic
+CustomCoordinateTP:
+  cmp byte ptr [PosFuncStateList+1A],FF          //Judge TP state is wait TP
+  je End_AllTpLogic
+  cmp byte ptr [PosFuncStateList+1A],00          //Judge the value &gt;= 0
+  jl End_AllTpLogic
+  cmp byte ptr [PosFuncStateList+1A],07          //Judge the value &lt;= 7
+  ja End_AllTpLogic
+
+  push rdi
+  push rcx
+  xor rdi,rdi
+  xor rcx,rcx
+  mov rdi,qword ptr [PosFuncStateList+1B]        //Read custom coordinate TP config list pointer
+  movzx ecx,byte ptr [PosFuncStateList+1A]       //Read TP hotkey
+  imul ecx,0D
+  add rdi,ecx
+  cmp byte ptr [rdi],00                          //Judge the TP hotkey is disable
+  pop rcx
+  pop rdi
+  je End_AllTpLogic
+
+  push rdi
+  push rax
+  xor rax,rax
+  xor rdi,rdi
+
+  mov rdi,qword ptr [PosFuncStateList+1B]        //Read custom coordinate TP config list pointer
+  movzx eax,byte ptr [PosFuncStateList+1A]       //Read TP hotkey
+  imul eax,0D
+  add eax,01                                     //Offset of part coordinate
+  add eax,00                                     //Offset of x
+  add rdi,eax                                    //Pointer to x
+  xor rax,rax
+  mov eax,dword ptr [rdi]                        //Read coordinate-x
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer
+  mov dword ptr [rdi+50],eax                     //Write coordinate-x to myself entity coordinate of sever sync
+  mov dword ptr [rdi+E0],eax                     //Write coordinate-x to myself entity coordinate
+  xor rdi,rdi
+  xor eax,eax
+
+  mov rdi,qword ptr [PosFuncStateList+1B]        //Read custom coordinate TP config list pointer
+  movzx eax,byte ptr [PosFuncStateList+1A]       //Read TP hotkey
+  imul eax,0D
+  add eax,01                                     //Offset of part coordinate
+  add eax,04                                     //Offset of y
+  add rdi,eax                                    //Pointer to y
+  xor rax,rax
+  mov eax,dword ptr [rdi]                        //Read coordinate-y
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer
+  mov dword ptr [rdi+54],eax                     //Write coordinate-y to myself entity coordinate of sever sync
+  mov dword ptr [rdi+E4],eax                     //Write coordinate-y to myself entity coordinate
+  xor rdi,rdi
+  xor eax,eax
+
+  mov rdi,qword ptr [PosFuncStateList+1B]        //Read custom coordinate TP config list pointer
+  movzx eax,byte ptr [PosFuncStateList+1A]       //Read TP hotkey
+  imul eax,0D
+  add eax,01                                     //Offset of part coordinate
+  add eax,08                                     //Offset of z
+  add rdi,eax                                    //Pointer to z
+  xor rax,rax
+  mov eax,dword ptr [rdi]                        //Read coordinate-z
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer
+  mov dword ptr [rdi+58],eax                     //Write coordinate-z to myself entity coordinate of sever sync
+  mov dword ptr [rdi+E8],eax                     //Write coordinate-z to myself entity coordinate
+
+  pop rax
+  pop rdi
+
+  jmp End_AllTpLogic
+MapStationTp:
+  cmp byte ptr [PosFuncStateList+1A],FF          //Judge TP state is wait TP
+  je End_AllTpLogic
+  cmp byte ptr [PosFuncStateList+1A],00          //Judge the value &gt;= 0
+  jl End_AllTpLogic
+  cmp byte ptr [PosFuncStateList+1A],07          //Judge the value &lt;= 7
+  ja End_AllTpLogic
+
+  push rdi
+  push rcx
+  push rax
+  xor rax,rax
+  xor rcx,rcx
+  xor rdi,rdi
+
+  mov rdi,qword ptr [PosFuncStateList+0]         //Read map station TP coordinate array pointer
+  movzx ecx,byte ptr [PosFuncStateList+1A]       //Read hotkey
+  movzx eax,byte ptr [PosFuncStateList+2C]       //Read map select
+  imul eax,08
+  imul eax,0D                                    //Offset of map select
+  imul ecx,0D                                    //Offset of map station
+  add eax,ecx
+  add rdi,eax
+  cmp byte ptr [rdi],00                          //Judge the map station is disable
+  pop rax
+  pop rcx
+  pop rdi
+  je End_AllTpLogic
+
+  push rdi
+  push rcx
+  xor rcx,rcx
+  xor rdi,rdi
+
+  mov rdi,qword ptr [PosFuncStateList+0]         //Read map station TP coordinate array pointer
+  movzx ecx,byte ptr [PosFuncStateList+2C]       //Read map select
+  imul ecx,08
+  imul ecx,0D
+  add rdi,ecx                                    //Pointer to map select
+  xor rcx,rcx
+  movzx ecx,byte ptr [PosFuncStateList+1A]       //Read hotkey
+  imul ecx,0D
+  add rdi,ecx
+  add rdi,01                                     //Pointer to coordinate-x of map station coordinate array
+  xor rcx,rcx
+  mov ecx,dword ptr [rdi]                        //Read coordinate-x
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer
+  mov dword ptr [rdi+50],ecx                     //Write coordinate-x for myself entity sever sync
+  mov dword ptr [rdi+E0],ecx                     //Write coordinate-x for myself entity
+  xor rdi,rdi
+  xor rcx,rcx
+
+  mov rdi,qword ptr [PosFuncStateList+0]         //Read map station TP coordinate array pointer
+  movzx ecx,byte ptr [PosFuncStateList+2C]       //Read map select
+  imul ecx,08
+  imul ecx,0D
+  add rdi,ecx                                    //Pointer to map select
+  xor rcx,rcx
+  movzx ecx,byte ptr [PosFuncStateList+1A]       //Read hotkey
+  imul ecx,0D
+  add rdi,ecx
+  add rdi,05                                     //Pointer to coordinate-y of map station coordinate array
+  xor rcx,rcx
+  mov ecx,dword ptr [rdi]                        //Read coordinate-y
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer
+  mov dword ptr [rdi+54],ecx                     //Write coordinate-y for myself entity sever sync
+  mov dword ptr [rdi+E4],ecx                     //Write coordinate-y for myself entity
+  xor rdi,rdi
+  xor rcx,rcx
+
+  mov rdi,qword ptr [PosFuncStateList+0]         //Read map station TP coordinate array pointer
+  movzx ecx,byte ptr [PosFuncStateList+2C]       //Read map select
+  imul ecx,08
+  imul ecx,0D
+  add rdi,ecx                                    //Pointer to map select
+  xor rcx,rcx
+  movzx ecx,byte ptr [PosFuncStateList+1A]       //Read hotkey
+  imul ecx,0D
+  add rdi,ecx
+  add rdi,09                                     //Pointer to coordinate-z of map station coordinate array
+  xor rcx,rcx
+  mov ecx,dword ptr [rdi]                        //Read coordinate-z
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer
+  mov dword ptr [rdi+58],ecx                     //Write coordinate-z for myself entity sever sync
+  mov dword ptr [rdi+E8],ecx                     //Write coordinate-z for myself entity
+  xor rdi,rdi
+  xor rcx,rcx
+
+  pop rcx
+  pop rdi
+
+  jmp End_AllTpLogic
+SpringTP:
+  cmp byte ptr [PosFuncStateList+1A],FF          //Judge TP state is wait TP
+  je End_AllTpLogic
+  cmp byte ptr [PosFuncStateList+1A],00          //Judge the value &gt;= 0
+  jl End_AllTpLogic
+  cmp byte ptr [PosFuncStateList+1A],01          //Judge the value &lt;= 1
+  ja End_AllTpLogic
+
+  push rdi
+  push rcx
+  xor rcx,rcx
+  xor rdi,rdi
+
+  mov rdi,qword ptr [PosFuncStateList+24]        //Read springboard TP congif list pointer
+  movzx ecx,byte ptr [PosFuncStateList+1A]       //Read hotkey
+  imul ecx,0C
+  add rdi,ecx                                    //Pointer to springboard coordinate
+  xor rcx,rcx
+  mov ecx,dword ptr [rdi]                        //Read springboard coordinate-x
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer
+  mov dword ptr [rdi+50],ecx                     //Write springboard coordinate-x to myself entity coordinate-x of sever sync
+  mov dword ptr [rdi+E0],ecx                     //Write springboard coordinate-x to myself entity coordinate-x
+  xor rdi,rdi
+  xor rcx,rcx
+
+  mov rdi,qword ptr [PosFuncStateList+24]        //Read springboard TP congif list pointer
+  movzx ecx,byte ptr [PosFuncStateList+1A]       //Read hotkey
+  imul ecx,0C
+  add rdi,ecx                                    //Pointer to springboard coordinate
+  xor rcx,rcx
+  mov ecx,dword ptr [rdi+04]                     //Read springboard coordinate-y
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer
+  mov dword ptr [rdi+54],ecx                     //Write springboard coordinate-x to myself entity coordinate-y of sever sync
+  mov dword ptr [rdi+E4],ecx                     //Write springboard coordinate-x to myself entity coordinate-y
+  xor rdi,rdi
+  xor rcx,rcx
+
+  mov rdi,qword ptr [PosFuncStateList+24]        //Read springboard TP congif list pointer
+  movzx ecx,byte ptr [PosFuncStateList+1A]       //Read hotkey
+  imul ecx,0C
+  add rdi,ecx                                    //Pointer to springboard coordinate
+  xor rcx,rcx
+  mov ecx,dword ptr [rdi+08]                     //Read springboard coordinate-z
+  xor rdi,rdi
+  mov rdi,qword ptr [PosFuncStateList+11]        //Read myself entity object pointer
+  mov dword ptr [rdi+58],ecx                     //Write springboard coordinate-x to myself entity coordinate-z of sever sync
+  mov dword ptr [rdi+E8],ecx                     //Write springboard coordinate-x to myself entity coordinate-z
+
+  pop rcx
+  pop rdi
+
+  jmp End_AllTpLogic
+End_AllTpLogic:
+  mov byte ptr [PosFuncStateList+1A],FF          //Restor hotkey
+ClientEntityCoordinateXSetOnHookCode:
+  movsd [rbx+000000E0],xmm0
+  jmp HookExit_ClientEntityPosSet_x
+
+OriginalAsm_LocalPlayerEntityPosInfo_x:
+  push rax
+  xor rax,rax
+  mov eax,dword ptr [rsi]
+  mov dword ptr [PosFuncStateList+8],eax     //Get myself coordinate-x
+  mov eax,dword ptr [rsi+08]
+  mov dword ptr [PosFuncStateList+C],eax     //Get myself coordinate-z
+  movsd [rbx+64],xmm0
+  pop rax
+  jmp HookExit_LocalPlayerEntityPosInfo_x
+
+HookExit_ClientEntityPosSet_x:  //Hook exit.
+  jmp HookReturn_ClientEntityPosSet_x
+
+HookExit_LocalPlayerEntityPosInfo_x:  //Hook exit.
+  jmp HookReturn_LocalPlayerEntityPosInfo_x
+
+//Hook inject.
+ClientEntityPosSet_x:
+  jmp OriginalAsm_ClientEntityPosSet_x
+  nop 3
+HookReturn_ClientEntityPosSet_x:  //Return original code.
+
+LocalPlayerEntityPosInfo_x:
+  jmp OriginalAsm_LocalPlayerEntityPosInfo_x
+HookReturn_LocalPlayerEntityPosInfo_x:  //Return original code.
+
+[DISABLE]
+//Restore inject.
+ClientEntityPosSet_x:
+  db F2 0F 11 83 E0 00 00 00
+
+LocalPlayerEntityPosInfo_x:
+  db F2 0F 11 43 64
+
+//Unregister the symbol binding of the Hook entry.
+unregistersymbol(ClientEntityPosSet_x)
+unregistersymbol(LocalPlayerEntityPosInfo_x)
+
+//Unregister the symbol binding of the client entity coordinate-x set on hook code.
+unregistersymbol(ClientEntityCoordinateXSetOnHookCode)
+
+//Free the memory of the hook code.
+dealloc(HookCode)
+
+//Unregister the symbol binding of the position functions state data list.
+unregistersymbol(PosFuncStateList)
+
+//Free the memory of the position functions state data list.
+dealloc(PosFuncStateList)
+
+//Free the memory of the map station tp hack coordinate array.
+dealloc(MapStationTpHackCoorArray)
+
+//Unregister the symbol binding of the custom coordinate TP config list.
+unregistersymbol(CustomCoorTPCfgList)
+
+//Free the memory of the custom coordinate TP config list.
+dealloc(CustomCoorTPCfgList)
+
+//Unregister the symbol binding of the SpringBoardTPCfgList.
+unregistersymbol(SpringBoardTPCfgList)
+
+//Free the memory of the springboard TP config list.
+dealloc(SpringBoardTPCfgList)
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>75</ID>
+          <Description>"一键精准获取自身实体对象指针"</Description>
+          <LastState/>
+          <Color>FFFFFF</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+PosFuncStateList+2D:
+  db 01
+
+[DISABLE]
+PosFuncStateList+2D:
+  db 01
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>164</ID>
+          <Description>"一键强制获取自身实体对象指针"</Description>
+          <LastState/>
+          <Color>FFFFFF</Color>
+          <VariableType>Auto Assembler Script</VariableType>
+          <AssemblerScript>[ENABLE]
+PosFuncStateList+10:
+  db 01
+
+[DISABLE]
+PosFuncStateList+10:
+  db 01
+</AssemblerScript>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>78</ID>
+          <Description>"客户端自身实体坐标 - X"</Description>
+          <Options moDefaultCollapsed="1" moRecursiveSetValue="1" moManualExpandCollapse="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>Float</VariableType>
+          <Address>PosFuncStateList+11</Address>
+          <Offsets>
+            <Offset>E0</Offset>
+          </Offsets>
+          <Hotkeys>
+            <Hotkey>
+              <Action>Decrease Value</Action>
+              <Keys>
+                <Key>37</Key>
+              </Keys>
+              <Value>15</Value>
+              <ID>0</ID>
+            </Hotkey>
+            <Hotkey>
+              <Action>Increase Value</Action>
+              <Keys>
+                <Key>39</Key>
+              </Keys>
+              <Value>15</Value>
+              <ID>1</ID>
+            </Hotkey>
+          </Hotkeys>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>81</ID>
+              <Description>"服务端同步客户端自身实体坐标 - X"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>FFFFFF</Color>
+              <VariableType>Float</VariableType>
+              <Address>PosFuncStateList+11</Address>
+              <Offsets>
+                <Offset>50</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>79</ID>
+          <Description>"客户端自身实体坐标 - Y"</Description>
+          <Options moDefaultCollapsed="1" moRecursiveSetValue="1" moManualExpandCollapse="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>Float</VariableType>
+          <Address>PosFuncStateList+11</Address>
+          <Offsets>
+            <Offset>E4</Offset>
+          </Offsets>
+          <Hotkeys>
+            <Hotkey>
+              <Action>Increase Value</Action>
+              <Keys>
+                <Key>85</Key>
+              </Keys>
+              <Value>15</Value>
+              <ID>0</ID>
+            </Hotkey>
+            <Hotkey>
+              <Action>Decrease Value</Action>
+              <Keys>
+                <Key>76</Key>
+              </Keys>
+              <Value>15</Value>
+              <ID>1</ID>
+            </Hotkey>
+          </Hotkeys>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>83</ID>
+              <Description>"服务端同步客户端自身实体坐标 - Y"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>FFFFFF</Color>
+              <VariableType>Float</VariableType>
+              <Address>PosFuncStateList+11</Address>
+              <Offsets>
+                <Offset>54</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>80</ID>
+          <Description>"客户端自身实体坐标 - Z"</Description>
+          <Options moDefaultCollapsed="1" moRecursiveSetValue="1" moManualExpandCollapse="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>Float</VariableType>
+          <Address>PosFuncStateList+11</Address>
+          <Offsets>
+            <Offset>E8</Offset>
+          </Offsets>
+          <Hotkeys>
+            <Hotkey>
+              <Action>Decrease Value</Action>
+              <Keys>
+                <Key>38</Key>
+              </Keys>
+              <Value>15</Value>
+              <ID>0</ID>
+            </Hotkey>
+            <Hotkey>
+              <Action>Increase Value</Action>
+              <Keys>
+                <Key>40</Key>
+              </Keys>
+              <Value>15</Value>
+              <ID>1</ID>
+            </Hotkey>
+          </Hotkeys>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>82</ID>
+              <Description>"服务端同步客户端自身实体坐标 - Z"</Description>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>FFFFFF</Color>
+              <VariableType>Float</VariableType>
+              <Address>PosFuncStateList+11</Address>
+              <Offsets>
+                <Offset>58</Offset>
+              </Offsets>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>166</ID>
+          <Description>"热键瞬移"</Description>
+          <Options moDefaultCollapsed="1" moManualExpandCollapse="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>FFFFFF</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>156</ID>
+              <Description>"热键B一键瞬移"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+PosFuncStateList+1A:
+  db 0
+
+
+[DISABLE]
+PosFuncStateList+1A:
+  db 0
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>66</Key>
+                  </Keys>
+                  <ID>0</ID>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>157</ID>
+              <Description>"热键N一键瞬移"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+PosFuncStateList+1A:
+  db 1
+
+
+[DISABLE]
+PosFuncStateList+1A:
+  db 1
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>78</Key>
+                  </Keys>
+                  <ID>0</ID>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>158</ID>
+              <Description>"热键M一键瞬移"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+PosFuncStateList+1A:
+  db 2
+
+
+[DISABLE]
+PosFuncStateList+1A:
+  db 2
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>77</Key>
+                  </Keys>
+                  <ID>0</ID>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>159</ID>
+              <Description>"热键 , 一键瞬移"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+PosFuncStateList+1A:
+  db 3
+
+
+[DISABLE]
+PosFuncStateList+1A:
+  db 3
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>188</Key>
+                  </Keys>
+                  <ID>0</ID>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>160</ID>
+              <Description>"热键 . 一键瞬移"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+PosFuncStateList+1A:
+  db 4
+
+
+[DISABLE]
+PosFuncStateList+1A:
+  db 4
+</AssemblerScript>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>190</Key>
+                  </Keys>
+                  <ID>0</ID>
+                </Hotkey>
+              </Hotkeys>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>161</ID>
+              <Description>"热键J一键瞬移"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+PosFuncStateList+1A:
+  db 5
+
+
+[DISABLE]
+PosFuncStateList+1A:
+  db 5
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>162</ID>
+              <Description>"热键K一键瞬移"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+PosFuncStateList+1A:
+  db 6
+
+
+[DISABLE]
+PosFuncStateList+1A:
+  db 6
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>163</ID>
+              <Description>"热键P一键瞬移"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>[ENABLE]
+PosFuncStateList+1A:
+  db 7
+
+
+[DISABLE]
+PosFuncStateList+1A:
+  db 7
+</AssemblerScript>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>85</ID>
+          <Description>"热键瞬移类功能（请在游戏客户端窗口为活动窗口时使用热键传送）"</Description>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>FFFFFF</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>86</ID>
+              <Description>"热键瞬移模式选择 (未初始化时保持关闭，否则触发热键可能闪退！)"</Description>
+              <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:未启用
+1:自定义坐标瞬移
+2:地图交互点瞬移
+3:板车瞬移
+</DropDownList>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>FFFFFF</Color>
+              <VariableType>Byte</VariableType>
+              <Address>PosFuncStateList+19</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>165</ID>
+              <Description>"热键瞬移类功能配置"</Description>
+              <Options moManualExpandCollapse="1"/>
+              <LastState Value="" RealAddress="00000000"/>
+              <Color>FFFFFF</Color>
+              <GroupHeader>1</GroupHeader>
+              <Address/>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>155</ID>
+                  <Description>"配置项_地图交互点瞬移"</Description>
+                  <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:联合狩猎_里奥的回忆
+1:联合狩猎_湖景村
+2:联合狩猎_月亮河公园
+3:联合狩猎_永眠镇
+4:匹配排位_月亮河公园
+5:匹配排位_赛马场
+6:匹配排位_闪金石窟
+7:匹配排位_不归林
+8:匹配排位_圣心医院
+9:匹配排位_军工厂
+10:匹配排位_湖景村
+11:匹配排位_永眠镇
+12:匹配排位_里奥的回忆
+13:模仿者_闪金石窟
+14:噩梦逐影_闪金石窟
+</DropDownList>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>FFFFFF</Color>
+                  <VariableType>Byte</VariableType>
+                  <Address>PosFuncStateList+2C</Address>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>87</ID>
+                  <Description>"配置表_自定义坐标瞬移"</Description>
+                  <Options moDefaultCollapsed="1" moManualExpandCollapse="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>FFFFFF</Color>
+                  <GroupHeader>1</GroupHeader>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>89</ID>
+                      <Description>"瞬移热键_B:"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>88</ID>
+                          <Description>"热键状态"</Description>
+                          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:未启用
+1:启用
+</DropDownList>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Byte</VariableType>
+                          <Address>CustomCoorTPCfgList+0*D</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>94</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+0*D+1+0*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>95</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+0*D+1+1*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>96</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+0*D+1+2*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>132</ID>
+                          <Description>"一键读取当前自身坐标 (热键: O+1)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 00
+[DISABLE]
+PosFuncStateList+23:
+  db 00
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>97</ID>
+                      <Description>"瞬移热键_N:"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>98</ID>
+                          <Description>"热键状态"</Description>
+                          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:未启用
+1:启用
+</DropDownList>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Byte</VariableType>
+                          <Address>CustomCoorTPCfgList+1*D</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>99</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+1*D+1+0*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>100</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+1*D+1+1*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>101</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+1*D+1+2*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>133</ID>
+                          <Description>"一键读取当前自身坐标 (热键: O+2)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 01
+[DISABLE]
+PosFuncStateList+23:
+  db 01
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>102</ID>
+                      <Description>"瞬移热键_M:"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>103</ID>
+                          <Description>"热键状态"</Description>
+                          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:未启用
+1:启用
+</DropDownList>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Byte</VariableType>
+                          <Address>CustomCoorTPCfgList+2*D</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>104</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+2*D+1+0*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>105</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+2*D+1+1*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>106</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+2*D+1+2*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>134</ID>
+                          <Description>"一键读取当前自身坐标 (热键: O+3)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 02
+[DISABLE]
+PosFuncStateList+23:
+  db 02
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>107</ID>
+                      <Description>"瞬移热键_,:"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>108</ID>
+                          <Description>"热键状态"</Description>
+                          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:未启用
+1:启用
+</DropDownList>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Byte</VariableType>
+                          <Address>CustomCoorTPCfgList+3*D</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>109</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+3*D+1+0*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>110</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+3*D+1+1*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>111</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+3*D+1+2*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>135</ID>
+                          <Description>"一键读取当前自身坐标 (热键: O+4)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 03
+[DISABLE]
+PosFuncStateList+23:
+  db 03
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>112</ID>
+                      <Description>"瞬移热键_.:"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>113</ID>
+                          <Description>"热键状态"</Description>
+                          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:未启用
+1:启用
+</DropDownList>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Byte</VariableType>
+                          <Address>CustomCoorTPCfgList+4*D</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>114</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+4*D+1+0*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>115</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+4*D+1+1*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>116</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+4*D+1+2*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>136</ID>
+                          <Description>"一键读取当前自身坐标 (热键: O+5)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 04
+[DISABLE]
+PosFuncStateList+23:
+  db 04
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>117</ID>
+                      <Description>"瞬移热键_J:"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>118</ID>
+                          <Description>"热键状态"</Description>
+                          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:未启用
+1:启用
+</DropDownList>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Byte</VariableType>
+                          <Address>CustomCoorTPCfgList+5*D</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>119</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+5*D+1+0*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>120</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+5*D+1+1*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>121</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+5*D+1+2*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>137</ID>
+                          <Description>"一键读取当前自身坐标 (热键: O+6)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 05
+[DISABLE]
+PosFuncStateList+23:
+  db 05
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>122</ID>
+                      <Description>"瞬移热键_K:"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>123</ID>
+                          <Description>"热键状态"</Description>
+                          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:未启用
+1:启用
+</DropDownList>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Byte</VariableType>
+                          <Address>CustomCoorTPCfgList+6*D</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>124</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+6*D+1+0*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>125</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+6*D+1+1*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>126</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+6*D+1+2*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>138</ID>
+                          <Description>"一键读取当前自身坐标  (热键: O+7)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 06
+[DISABLE]
+PosFuncStateList+23:
+  db 06
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>127</ID>
+                      <Description>"瞬移热键_P:"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>128</ID>
+                          <Description>"热键状态"</Description>
+                          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:未启用
+1:启用
+</DropDownList>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Byte</VariableType>
+                          <Address>CustomCoorTPCfgList+7*D</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>129</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+7*D+1+0*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>130</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+7*D+1+1*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>131</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>CustomCoorTPCfgList+7*D+1+2*4</Address>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>139</ID>
+                          <Description>"一键读取当前自身坐标 (热键: O+8)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 07
+[DISABLE]
+PosFuncStateList+23:
+  db 07
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+                <CheatEntry>
+                  <ID>142</ID>
+                  <Description>"配置表_板车瞬移"</Description>
+                  <Options moDefaultCollapsed="1" moManualExpandCollapse="1"/>
+                  <LastState Value="" RealAddress="00000000"/>
+                  <Color>FFFFFF</Color>
+                  <GroupHeader>1</GroupHeader>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>143</ID>
+                      <Description>"板车a（热键:B）"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>145</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>PosFuncStateList+24</Address>
+                          <Offsets>
+                            <Offset>0*C+0</Offset>
+                          </Offsets>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>146</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>PosFuncStateList+24</Address>
+                          <Offsets>
+                            <Offset>0*C+4</Offset>
+                          </Offsets>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>147</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>PosFuncStateList+24</Address>
+                          <Offsets>
+                            <Offset>0*C+8</Offset>
+                          </Offsets>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>151</ID>
+                          <Description>"一键记录板车a坐标 (热键: O+9)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 08
+[DISABLE]
+PosFuncStateList+23:
+  db 08
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                    <CheatEntry>
+                      <ID>144</ID>
+                      <Description>"板车b (热键:N)"</Description>
+                      <LastState Value="" RealAddress="00000000"/>
+                      <Color>FFFFFF</Color>
+                      <GroupHeader>1</GroupHeader>
+                      <CheatEntries>
+                        <CheatEntry>
+                          <ID>148</ID>
+                          <Description>"X"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>PosFuncStateList+24</Address>
+                          <Offsets>
+                            <Offset>1*C+0</Offset>
+                          </Offsets>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>149</ID>
+                          <Description>"Y"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>PosFuncStateList+24</Address>
+                          <Offsets>
+                            <Offset>1*C+4</Offset>
+                          </Offsets>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>150</ID>
+                          <Description>"Z"</Description>
+                          <ShowAsSigned>0</ShowAsSigned>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Float</VariableType>
+                          <Address>PosFuncStateList+24</Address>
+                          <Offsets>
+                            <Offset>1*C+8</Offset>
+                          </Offsets>
+                        </CheatEntry>
+                        <CheatEntry>
+                          <ID>152</ID>
+                          <Description>"一键记录板车b坐标 (热键: O+0)"</Description>
+                          <LastState/>
+                          <Color>FFFFFF</Color>
+                          <VariableType>Auto Assembler Script</VariableType>
+                          <AssemblerScript>[ENABLE]
+PosFuncStateList+23:
+  db 09
+[DISABLE]
+PosFuncStateList+23:
+  db 09
+</AssemblerScript>
+                        </CheatEntry>
+                      </CheatEntries>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>53</ID>
+      <Description>"皮影轮廓透视"</Description>
+      <LastState/>
+      <Color>FFFFFF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+aobscanmodule(INJECT,neox_engine.dll,48 89 41 50 40 84 ED)
+alloc(newmem,$1000,INJECT)
+label(code)
+label(return)
+
+newmem:
+
+code:
+  nop
+  test bpl,bpl
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop 2
+return:
+registersymbol(INJECT)
+
+[DISABLE]
+INJECT:
+  db 48 89 41 50 40 84 ED
+
+unregistersymbol(INJECT)
+dealloc(newmem)
+
+{
+// ORIGINAL CODE - INJECTION POINT: neox_engine.dll+F3F5A6
+
+neox_engine.dll+F3F580: 44 0F B7 E6                 - movzx r12d,si
+neox_engine.dll+F3F584: 49 FF CC                    - dec r12
+neox_engine.dll+F3F587: 66 0F 1F 84 00 00 00 00 00  - nop word ptr [rax+rax+00000000]
+neox_engine.dll+F3F590: 48 8B 0F                    - mov rcx,[rdi]
+neox_engine.dll+F3F593: 48 8B 41 50                 - mov rax,[rcx+50]
+neox_engine.dll+F3F597: 45 84 F6                    - test r14b,r14b
+neox_engine.dll+F3F59A: 74 06                       - je neox_engine.dll+F3F5A2
+neox_engine.dll+F3F59C: 4C 0F AB E0                 - bts rax,r12
+neox_engine.dll+F3F5A0: EB 04                       - jmp neox_engine.dll+F3F5A6
+neox_engine.dll+F3F5A2: 4C 0F B3 E0                 - btr rax,r12
+// ---------- INJECTING HERE ----------
+neox_engine.dll+F3F5A6: 48 89 41 50                 - mov [rcx+50],rax
+// ---------- DONE INJECTING  ----------
+neox_engine.dll+F3F5AA: 40 84 ED                    - test bpl,bpl
+neox_engine.dll+F3F5AD: 74 13                       - je neox_engine.dll+F3F5C2
+neox_engine.dll+F3F5AF: 49 8B 07                    - mov rax,[r15]
+neox_engine.dll+F3F5B2: 8B 94 24 88 00 00 00        - mov edx,[rsp+00000088]
+neox_engine.dll+F3F5B9: 49 8B CF                    - mov rcx,r15
+neox_engine.dll+F3F5BC: FF 90 08 05 00 00           - call qword ptr [rax+00000508]
+neox_engine.dll+F3F5C2: 66 83 FE 2C                 - cmp si,2C
+neox_engine.dll+F3F5C6: 75 7E                       - jne neox_engine.dll+F3F646
+neox_engine.dll+F3F5C8: 48 8B 07                    - mov rax,[rdi]
+neox_engine.dll+F3F5CB: 48 8B 88 B0 01 00 00        - mov rcx,[rax+000001B0]
+}
+</AssemblerScript>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>221</ID>
+      <Description>"初始化位置相关功能"</Description>
+      <LastState/>
+      <Color>FFFFFF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{ Game   : dwrg.exe
+  Version: 
+  Date   : 2025-04-09
+  Author : KernelHook
+}
+
+[ENABLE]
+//================= 申请内存&amp;注册自定义符号 =================
+aobscanmodule(SetClientPlayerPos_x,neox_engine.dll,F2 0F 11 83 E0 00 00 00 8B)  // 获取计算玩家对象x轴坐标共用代码地址
+alloc(newmem,$1000,SetClientPlayerPos_x)              // Hook代码
+label(return)
+label(exit)
+label(originalCodeLogic)  // 计算客户端玩家x轴数据原代码逻辑换
+label(lockThisPlayerPos)  // Hook锁定此玩家到指定位置
+label(trackObjPos)  // 绑定跟踪对象位置
+
+alloc(thisPlayerPosXaddress,8)  // 获取位置对象玩家x轴地址
+registersymbol(thisPlayerPosXaddress)
+
+alloc(thisPlayerObjPtr,8)  // 此玩家对象指针
+registersymbol(thisPlayerObjPtr)
+
+alloc(posFuncStateDataArray,256)  // 玩家位置相关功能状态数据数组
+registersymbol(posFuncStateDataArray)
+{
+玩家位置相关功能状态数据结构：
+posFuncStateDataArray+0：Hook锁死坐标开关 bool 1byte 0/1
+posFuncStateDataArray+1：通过目标玩家x轴地址强制使此玩家跟踪绑定到目标玩家位置开关 bool 1byte 0/1
+posFuncStateDataArray+2：跟踪目标玩家x轴地址 long 8byte address
+posFuncStateDataArray+A：指定此玩家坐标x float 4byte
+posFuncStateDataArray+E：指定此玩家坐标y float 4byte
+posFuncStateDataArray+12：指定此玩家坐标z float 4byte
+}
+
+//================= Hook代码 =================
+newmem:
+  push rax
+  xor rax,rax
+  lea rax,[rbx+E0]
+  cmp qword ptr [thisPlayerPosXaddress],rax  // 比较当前计算x轴坐标的玩家是否为需获取的玩家的x轴地址
+  jne originalCodeLogic
+  mov [thisPlayerObjPtr],rbx
+  cmp byte ptr [posFuncStateDataArray+0],01
+  je lockThisPlayerPos
+  cmp byte ptr [posFuncStateDataArray+1],01
+  je trackObjPos
+  jne originalCodeLogic
+lockThisPlayerPos:
+  push rcx
+  xor rcx,rcx
+  mov ecx,dword ptr [posFuncStateDataArray+A]
+  mov dword ptr [rbx+E0],ecx
+  mov dword ptr [rbx+50],ecx
+  mov ecx,dword ptr [posFuncStateDataArray+E]
+  mov dword ptr [rbx+E4],ecx
+  mov dword ptr [rbx+54],ecx
+  mov ecx,dword ptr [posFuncStateDataArray+12]
+  mov dword ptr [rbx+E8],ecx
+  mov dword ptr [rbx+58],ecx
+  pop rcx
+  jmp exit
+trackObjPos:
+  push rcx
+  xor rcx,rcx
+  xor rax,rax
+  mov rax,[posFuncStateDataArray+2]
+  sub rax,E0
+  mov ecx,dword ptr [rax+E0]
+  mov dword ptr [rbx+E0],ecx
+  mov dword ptr [rbx+50],ecx
+  mov ecx,dword ptr [rax+E4]
+  mov dword ptr [rbx+E4],ecx
+  mov dword ptr [rbx+54],ecx
+  mov ecx,dword ptr [rax+E8]
+  mov dword ptr [rbx+E8],ecx
+  mov dword ptr [rbx+58],ecx
+  pop rcx
+  jmp exit
+
+originalCodeLogic:
+  movsd [rbx+000000E0],xmm0
+exit:
+  pop rax
+  jmp return
+
+
+//================= Hook入口 =================
+SetClientPlayerPos_x:  // 内存注入地址
+  jmp newmem
+  nop 3
+//================= Hook出口 =================
+return:
+registersymbol(SetClientPlayerPos_x)
+
+[DISABLE]
+//================= 还原代码 =================
+SetClientPlayerPos_x:
+  db F2 0F 11 83 E0 00 00 00
+
+//================= 释放内存&amp;注销自定义符号 =================
+unregistersymbol(SetClientPlayerPos_x)
+dealloc(newmem)
+
+dealloc(thisPlayerPosXaddress,8)
+unregistersymbol(thisPlayerPosXaddress)
+
+dealloc(thisPlayerObjPtr)
+unregistersymbol(thisPlayerObjPtr)
+
+dealloc(posFuncStateDataArray)
+unregistersymbol(posFuncStateDataArray)
+
+
+
+{
+// ORIGINAL CODE - INJECTION POINT: neox_engine.Py_IncRef+43EC
+
+neox_engine.Py_IncRef+43C3: 48 8B 01                 - mov rax,[rcx]
+neox_engine.Py_IncRef+43C6: 4C 8D 44 24 20           - lea r8,[rsp+20]
+neox_engine.Py_IncRef+43CB: FF 90 08 02 00 00        - call qword ptr [rax+00000208]
+neox_engine.Py_IncRef+43D1: 8B 44 24 28              - mov eax,[rsp+28]
+neox_engine.Py_IncRef+43D5: F2 0F 10 44 24 20        - movsd xmm0,[rsp+20]
+neox_engine.Py_IncRef+43DB: F2 0F 11 43 50           - movsd [rbx+50],xmm0
+neox_engine.Py_IncRef+43E0: 33 D2                    - xor edx,edx
+neox_engine.Py_IncRef+43E2: 89 43 58                 - mov [rbx+58],eax
+neox_engine.Py_IncRef+43E5: 48 8B CB                 - mov rcx,rbx
+neox_engine.Py_IncRef+43E8: F2 0F 10 07              - movsd xmm0,[rdi]
+// ---------- INJECTING HERE ----------
+neox_engine.Py_IncRef+43EC: F2 0F 11 83 E0 00 00 00  - movsd [rbx+000000E0],xmm0
+// ---------- DONE INJECTING  ----------
+neox_engine.Py_IncRef+43F4: 8B 47 08                 - mov eax,[rdi+08]
+neox_engine.Py_IncRef+43F7: 89 83 E8 00 00 00        - mov [rbx+000000E8],eax
+neox_engine.Py_IncRef+43FD: 48 8B 03                 - mov rax,[rbx]
+neox_engine.Py_IncRef+4400: FF 90 98 02 00 00        - call qword ptr [rax+00000298]
+neox_engine.Py_IncRef+4406: 48 83 BB F0 01 00 00 00  - cmp qword ptr [rbx+000001F0],00
+neox_engine.Py_IncRef+440E: 74 14                    - je neox_engine.Py_IncRef+4424
+neox_engine.Py_IncRef+4410: 0F 57 C0                 - xorps xmm0,xmm0
+neox_engine.Py_IncRef+4413: 0F 2F 83 08 02 00 00     - comiss xmm0,[rbx+00000208]
+neox_engine.Py_IncRef+441A: 72 08                    - jb neox_engine.Py_IncRef+4424
+neox_engine.Py_IncRef+441C: 48 8B CB                 - mov rcx,rbx
+}
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>223</ID>
+          <Description>"通过玩家x轴地址获取玩家对象数据"</Description>
+          <Options moHideChildren="1" moManualExpandCollapse="1"/>
+          <LastState Value="" RealAddress="00000000"/>
+          <Color>FFFFFF</Color>
+          <GroupHeader>1</GroupHeader>
+          <CheatEntries>
+            <CheatEntry>
+              <ID>224</ID>
+              <Description>"请填写此玩家x轴地址"</Description>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>FFFFFF</Color>
+              <VariableType>8 Bytes</VariableType>
+              <Address>thisPlayerPosXaddress</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>225</ID>
+              <Description>"此玩家对象指针"</Description>
+              <ShowAsHex>1</ShowAsHex>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>FFFFFF</Color>
+              <VariableType>8 Bytes</VariableType>
+              <Address>thisPlayerObjPtr</Address>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>226</ID>
+              <Description>"此玩家x轴坐标（有热键）"</Description>
+              <Options moRecursiveSetValue="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>FFFFFF</Color>
+              <VariableType>Float</VariableType>
+              <Address>thisPlayerObjPtr</Address>
+              <Offsets>
+                <Offset>E0</Offset>
+              </Offsets>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>66</Key>
+                  </Keys>
+                  <Value>463</Value>
+                  <Description>坐标点1</Description>
+                  <ID>0</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>78</Key>
+                  </Keys>
+                  <Value>1074</Value>
+                  <Description>坐标点2</Description>
+                  <ID>1</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>77</Key>
+                  </Keys>
+                  <Value>431</Value>
+                  <Description>坐标点3</Description>
+                  <ID>2</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>74</Key>
+                  </Keys>
+                  <Description>坐标点4</Description>
+                  <ID>3</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Decrease Value</Action>
+                  <Keys>
+                    <Key>37</Key>
+                  </Keys>
+                  <Value>10</Value>
+                  <Description>x轴负方向增加</Description>
+                  <ID>4</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Increase Value</Action>
+                  <Keys>
+                    <Key>39</Key>
+                  </Keys>
+                  <Value>10</Value>
+                  <Description>x轴正方向增加</Description>
+                  <ID>5</ID>
+                </Hotkey>
+              </Hotkeys>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>173</ID>
+                  <Description>"指定此玩家位置x轴（Hook锁定防拉回指定坐标）"</Description>
+                  <Options moRecursiveSetValue="1" moAlwaysHideChildren="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>FFFFFF</Color>
+                  <VariableType>Float</VariableType>
+                  <Address>posFuncStateDataArray+A</Address>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>174</ID>
+                      <Description>"此玩家x轴服务器同步坐标数据"</Description>
+                      <ShowAsSigned>0</ShowAsSigned>
+                      <Color>FFFFFF</Color>
+                      <VariableType>Float</VariableType>
+                      <Address>thisPlayerObjPtr</Address>
+                      <Offsets>
+                        <Offset>50</Offset>
+                      </Offsets>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>175</ID>
+              <Description>"此玩家y轴坐标（有热键）"</Description>
+              <Options moRecursiveSetValue="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>FFFFFF</Color>
+              <VariableType>Float</VariableType>
+              <Address>thisPlayerObjPtr</Address>
+              <Offsets>
+                <Offset>E4</Offset>
+              </Offsets>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>66</Key>
+                  </Keys>
+                  <Value>0</Value>
+                  <Description>坐标点1</Description>
+                  <ID>0</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>78</Key>
+                  </Keys>
+                  <Value>0</Value>
+                  <Description>坐标点2</Description>
+                  <ID>1</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>77</Key>
+                  </Keys>
+                  <Value>0</Value>
+                  <Description>坐标点3</Description>
+                  <ID>2</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>74</Key>
+                  </Keys>
+                  <Description>坐标点4</Description>
+                  <ID>3</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Increase Value</Action>
+                  <Keys>
+                    <Key>85</Key>
+                  </Keys>
+                  <Value>10</Value>
+                  <Description>y轴正方向增加</Description>
+                  <ID>4</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Decrease Value</Action>
+                  <Keys>
+                    <Key>76</Key>
+                  </Keys>
+                  <Value>10</Value>
+                  <Description>y轴负方向增加</Description>
+                  <ID>5</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Toggle Activation</Action>
+                  <Keys>
+                    <Key>69</Key>
+                  </Keys>
+                  <ID>6</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Increase Value</Action>
+                  <Keys>
+                    <Key>69</Key>
+                  </Keys>
+                  <Value>45</Value>
+                  <ID>7</ID>
+                </Hotkey>
+              </Hotkeys>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>176</ID>
+                  <Description>"指定此玩家位置y轴（Hook锁定防拉回指定坐标）"</Description>
+                  <Options moRecursiveSetValue="1" moAlwaysHideChildren="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>FFFFFF</Color>
+                  <VariableType>Float</VariableType>
+                  <Address>posFuncStateDataArray+E</Address>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>177</ID>
+                      <Description>"此玩家y轴服务器同步坐标数据"</Description>
+                      <ShowAsSigned>0</ShowAsSigned>
+                      <Color>FFFFFF</Color>
+                      <VariableType>Float</VariableType>
+                      <Address>thisPlayerObjPtr</Address>
+                      <Offsets>
+                        <Offset>54</Offset>
+                      </Offsets>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>178</ID>
+              <Description>"此玩家z轴坐标（有热键）"</Description>
+              <Options moRecursiveSetValue="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+              <ShowAsSigned>0</ShowAsSigned>
+              <Color>FFFFFF</Color>
+              <VariableType>Float</VariableType>
+              <Address>thisPlayerObjPtr</Address>
+              <Offsets>
+                <Offset>E8</Offset>
+              </Offsets>
+              <Hotkeys>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>66</Key>
+                  </Keys>
+                  <Value>253</Value>
+                  <Description>坐标点1</Description>
+                  <ID>0</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>78</Key>
+                  </Keys>
+                  <Value>-513</Value>
+                  <Description>坐标点2</Description>
+                  <ID>1</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>77</Key>
+                  </Keys>
+                  <Value>181</Value>
+                  <Description>坐标点3</Description>
+                  <ID>2</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Set Value</Action>
+                  <Keys>
+                    <Key>74</Key>
+                  </Keys>
+                  <Description>坐标点4</Description>
+                  <ID>3</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Increase Value</Action>
+                  <Keys>
+                    <Key>38</Key>
+                  </Keys>
+                  <Value>10</Value>
+                  <Description>z轴正方向增加</Description>
+                  <ID>4</ID>
+                </Hotkey>
+                <Hotkey>
+                  <Action>Decrease Value</Action>
+                  <Keys>
+                    <Key>40</Key>
+                  </Keys>
+                  <Value>10</Value>
+                  <Description>z轴负方向增加</Description>
+                  <ID>5</ID>
+                </Hotkey>
+              </Hotkeys>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>227</ID>
+                  <Description>"指定此玩家位置z轴（Hook锁定防拉回指定坐标）"</Description>
+                  <Options moRecursiveSetValue="1" moAlwaysHideChildren="1" moActivateChildrenAsWell="1" moDeactivateChildrenAsWell="1"/>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>FFFFFF</Color>
+                  <VariableType>Float</VariableType>
+                  <Address>posFuncStateDataArray+12</Address>
+                  <CheatEntries>
+                    <CheatEntry>
+                      <ID>179</ID>
+                      <Description>"此玩家z轴服务器同步坐标数据"</Description>
+                      <ShowAsSigned>0</ShowAsSigned>
+                      <Color>FFFFFF</Color>
+                      <VariableType>Float</VariableType>
+                      <Address>thisPlayerObjPtr</Address>
+                      <Offsets>
+                        <Offset>58</Offset>
+                      </Offsets>
+                    </CheatEntry>
+                  </CheatEntries>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>228</ID>
+              <Description>"Hook锁定玩家坐标到指定位置防拉回"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+[enable]
+writeBytes(getAddress("posFuncStateDataArray")+0,0x01)
+
+
+[disable]
+writeBytes(getAddress("posFuncStateDataArray")+0,0x00)
+</AssemblerScript>
+            </CheatEntry>
+            <CheatEntry>
+              <ID>229</ID>
+              <Description>"此玩家绑定跟踪指定玩家x轴地址的目标玩家位置"</Description>
+              <LastState/>
+              <Color>FFFFFF</Color>
+              <VariableType>Auto Assembler Script</VariableType>
+              <AssemblerScript>{$lua}
+[enable]
+writeBytes(getAddress("posFuncStateDataArray")+1,0x01)
+
+
+[disable]
+writeBytes(getAddress("posFuncStateDataArray")+1,0x00)
+</AssemblerScript>
+              <CheatEntries>
+                <CheatEntry>
+                  <ID>230</ID>
+                  <Description>"指定被跟踪目标玩家x轴地址"</Description>
+                  <ShowAsHex>1</ShowAsHex>
+                  <ShowAsSigned>0</ShowAsSigned>
+                  <Color>FFFFFF</Color>
+                  <VariableType>8 Bytes</VariableType>
+                  <Address>posFuncStateDataArray+2</Address>
+                </CheatEntry>
+              </CheatEntries>
+            </CheatEntry>
+          </CheatEntries>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>253</ID>
+      <Description>"穿墙"</Description>
+      <Options moHideChildren="1"/>
+      <LastState/>
+      <Color>FFFFFF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{
+    Author：KernelHook
+    This script is use of get wall hack address.
+}
+
+[ENABLE]
+aobscanmodule(wallHack,neox_engine.dll,48 ?? ?? ?? ?? ?? ?? EB  ?? F2 0F 10 73 10 0F 57 C0 66 0F 2E F0 7A ?? 75 ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? E8) // should be unique
+alloc(newmem,$1000,wallHack)
+
+alloc(wallHackerAddress,8)
+registersymbol(wallHackerAddress)
+
+alloc(debugInfo,256)
+registersymbol(debugInfo)
+
+label(code)
+label(return)
+
+newmem:
+  cmp [rbx+14],40100000
+  jne code
+  /*cmp [rbx+0],2
+  jne code*/
+
+  push rdi
+  xor rdi,rdi
+  lea rdi,[rbx+38]
+  mov [debugInfo],rdi
+  pop rdi
+
+  /*cmp dword ptr [rbx+38],3AD
+  jne code*/
+  /*cmp [rbx+BC],0
+  jne code
+  cmp [rbx+18],0
+  jne code
+  cmp [rbx+1C],0
+  jne code
+  cmp [rbx+20],1
+  jne code*/
+  /*cmp [rbx+2C],#32766
+  jne code*/
+
+  cmp byte ptr [rbx+24],0
+  jne code
+  cmp byte ptr [rbx+25],0
+  jne code
+  cmp byte ptr [rbx+26],0
+  jne code
+  cmp byte ptr [rbx+27],0
+  jne code
+  mov [wallHackerAddress],rbx
+
+
+code:
+  movsd xmm6,[rbx+10]
+  jmp return
+
+wallHack+09:
+  jmp newmem
+return:
+registersymbol(wallHack)
+
+[DISABLE]
+wallHack+09:
+  db F2 0F 10 73 10
+
+unregistersymbol(wallHack)
+dealloc(newmem)
+
+dealloc(debugInfo)
+unregistersymbol(debugInfo)
+
+dealloc(wallHackerAddress)
+unregistersymbol(wallHackerAddress)
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>254</ID>
+          <Description>"功能开关"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>Float</VariableType>
+          <Address>wallHackerAddress</Address>
+          <Offsets>
+            <Offset>14</Offset>
+          </Offsets>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>255</ID>
+          <Description>"debug"</Description>
+          <ShowAsHex>1</ShowAsHex>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>8 Bytes</VariableType>
+          <Address>debugInfo</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>214</ID>
+      <Description>"对象距离计算开关"</Description>
+      <Options moHideChildren="1"/>
+      <LastState/>
+      <Color>FFFFFF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{$lua}
+[enable]
+globalConfigList.getObjToObjDistanceBy3D = true
+
+
+[disable]
+globalConfigList.getObjToObjDistanceBy3D = false
+
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>215</ID>
+          <Description>"对象A的x轴地址"</Description>
+          <ShowAsHex>1</ShowAsHex>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>8 Bytes</VariableType>
+          <Address>getDistanceProcess+0</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>216</ID>
+          <Description>"对象B的x轴地址"</Description>
+          <ShowAsHex>1</ShowAsHex>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>8 Bytes</VariableType>
+          <Address>getDistanceProcess+8</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>217</ID>
+          <Description>"对象A与对象B之间的距离"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>Float</VariableType>
+          <Address>getDistanceProcess+10</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>180</ID>
+      <Description>"通过玩家x轴地址获取玩家对象指针"</Description>
+      <Options moHideChildren="1"/>
+      <LastState/>
+      <Color>FFFFFF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>{ Game   : dwrg.exe
+  Version: 
+  Date   : 2025-04-09
+  Author : Coder_Lixx
+
+  This script does blah blah blah
+}
+
+[ENABLE]
+
+
+aobscanmodule(GET_PLAYER_OBJ_PTR,neox_engine.dll,CC 48 8B 41 40 C3) // should be unique
+alloc(newmem,$1000,GET_PLAYER_OBJ_PTR)
+alloc(myself_xPtr,8)
+registersymbol(myself_xPtr)
+alloc(myselfObjPtr,8)
+registersymbol(myselfObjPtr)
+label(code)
+label(return)
+
+newmem:
+  push rbx
+  mov rbx,[myself_xPtr]
+  sub rbx,E0
+  cmp [rcx+40],rbx
+  jne code
+  lea rbx,[rcx+40]
+  mov [myselfObjPtr],rbx
+
+code:
+  pop rbx
+  mov rax,[rcx+40]
+  ret 
+  jmp return
+
+GET_PLAYER_OBJ_PTR+01:
+  jmp newmem
+return:
+registersymbol(GET_PLAYER_OBJ_PTR)
+
+[DISABLE]
+
+GET_PLAYER_OBJ_PTR+01:
+  db 48 8B 41 40 C3
+
+unregistersymbol(GET_PLAYER_OBJ_PTR)
+dealloc(newmem)
+dealloc(myself_xPtr)
+unregistersymbol(myself_xPtr)
+dealloc(myselfObjPtr)
+unregistersymbol(myselfObjPtr)
+
+{
+// ORIGINAL CODE - INJECTION POINT: neox_engine.mobile::server::UpdateDocRequest::seq_key
+
+neox_engine.dll+394BE6: CC           - int 3 
+neox_engine.dll+394BE7: CC           - int 3 
+neox_engine.dll+394BE8: CC           - int 3 
+neox_engine.dll+394BE9: CC           - int 3 
+neox_engine.dll+394BEA: CC           - int 3 
+neox_engine.dll+394BEB: CC           - int 3 
+neox_engine.dll+394BEC: CC           - int 3 
+neox_engine.dll+394BED: CC           - int 3 
+neox_engine.dll+394BEE: CC           - int 3 
+neox_engine.dll+394BEF: CC           - int 3 
+// ---------- INJECTING HERE ----------
+neox_engine.mobile::server::UpdateDocRequest::seq_key: 48 8B 41 40  - mov rax,[rcx+40]
+// ---------- DONE INJECTING  ----------
+neox_engine.mobile::server::UpdateDocRequest::seq_key+4: C3           - ret 
+neox_engine.mobile::server::UpdateDocRequest::seq_key+5: CC           - int 3 
+neox_engine.mobile::server::UpdateDocRequest::seq_key+6: CC           - int 3 
+neox_engine.mobile::server::UpdateDocRequest::seq_key+7: CC           - int 3 
+neox_engine.mobile::server::UpdateDocRequest::seq_key+8: CC           - int 3 
+neox_engine.mobile::server::UpdateDocRequest::seq_key+9: CC           - int 3 
+neox_engine.mobile::server::UpdateDocRequest::seq_key+A: CC           - int 3 
+neox_engine.mobile::server::UpdateDocRequest::seq_key+B: CC           - int 3 
+neox_engine.mobile::server::UpdateDocRequest::seq_key+C: CC           - int 3 
+neox_engine.mobile::server::UpdateDocRequest::seq_key+D: CC           - int 3 
+}
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>181</ID>
+          <Description>"填入获取玩家对象的x轴地址"</Description>
+          <ShowAsHex>1</ShowAsHex>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>8 Bytes</VariableType>
+          <Address>myself_xPtr</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>182</ID>
+          <Description>"该玩家对象指针的计算结果"</Description>
+          <ShowAsHex>1</ShowAsHex>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>8 Bytes</VariableType>
+          <Address>myselfObjPtr</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>231</ID>
+          <Description>"这里填写获取到的自己玩家对象指针的地址"</Description>
+          <ShowAsHex>1</ShowAsHex>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>8 Bytes</VariableType>
+          <Address>000001B849C57070</Address>
+        </CheatEntry>
+        <CheatEntry>
+          <ID>232</ID>
+          <Description>"这里填写获取到的要附身玩家的玩家对象指针的地址"</Description>
+          <ShowAsHex>1</ShowAsHex>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>8 Bytes</VariableType>
+          <Address>000001B849C7D490</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>233</ID>
+      <Description>"Hook UI"</Description>
+      <Options moHideChildren="1"/>
+      <LastState/>
+      <Color>FFFFFF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+aobscanmodule(INJECT,neox_engine.dll,88 91 85 02 00 00)
+alloc(newmem,$1000,INJECT)
+alloc(UIStateControl,4)
+registersymbol(UIStateControl)
+label(ui_show)
+label(return)
+label(ui_hide)
+
+newmem:
+  cmp [UIStateControl],0
+  je return
+  cmp [UIStateControl],1
+  je ui_show
+  cmp [UIStateControl],2
+  je ui_hide
+ui_show:
+  mov [rcx+00000285],#257
+  jmp return
+ui_hide:
+  mov [rcx+00000285],#1
+  jmp return
+
+INJECT:
+  jmp newmem
+  nop
+return:
+registersymbol(INJECT)
+
+[DISABLE]
+INJECT:
+  db 88 91 85 02 00 00
+
+unregistersymbol(INJECT)
+dealloc(newmem)
+dealloc(UIStateControl)
+unregistersymbol(UIStateControl)
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>234</ID>
+          <Description>"UI状态"</Description>
+          <DropDownList ReadOnly="1" DescriptionOnly="1" DisplayValueAsItem="1">0:冻结
+1:显示
+2:隐藏
+</DropDownList>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>4 Bytes</VariableType>
+          <Address>UIStateControl</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>235</ID>
+      <Description>"所有进度条计算共用代码Hook"</Description>
+      <Options moHideChildren="1"/>
+      <LastState/>
+      <Color>FFFFFF</Color>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+aobscanmodule(SetLoadingBarVal,neox_engine.dll,F3 0F 11 91 A4 04 00 00)
+alloc(newmem,$1000,SetLoadingBarVal)
+
+alloc(LoadingBarVal,4)
+registersymbol(LoadingBarVal)
+
+label(code)
+label(return)
+
+newmem:
+
+code:
+  movss xmm2,[LoadingBarVal]
+  movss [rcx+000004A4],xmm2
+  jmp return
+
+SetLoadingBarVal:
+  jmp newmem
+  nop 3
+return:
+registersymbol(SetLoadingBarVal)
+
+[DISABLE]
+SetLoadingBarVal:
+  db F3 0F 11 91 A4 04 00 00
+
+unregistersymbol(SetLoadingBarVal)
+dealloc(newmem)
+
+dealloc(LoadingBarVal)
+unregistersymbol(LoadingBarVal)
+
+</AssemblerScript>
+      <CheatEntries>
+        <CheatEntry>
+          <ID>236</ID>
+          <Description>"自定义当前进度条加载进度值"</Description>
+          <ShowAsSigned>0</ShowAsSigned>
+          <Color>FFFFFF</Color>
+          <VariableType>Float</VariableType>
+          <Address>LoadingBarVal</Address>
+        </CheatEntry>
+      </CheatEntries>
+    </CheatEntry>
+  </CheatEntries>
+</CheatTable>
